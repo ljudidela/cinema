@@ -1,87 +1,57 @@
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
-import { Booking, Movie, Cinema } from '../types';
+import { BookingWithDetails } from '../types';
+import { format } from 'date-fns';
 
-interface BookingWithDetails extends Booking {
-  movie?: Movie;
-  cinema?: Cinema;
-}
-
-export default function MyTickets() {
-  const { user } = useAuth();
-
-  const { data: bookings, isLoading } = useQuery({
-    queryKey: ['my-tickets', user?.id],
-    queryFn: () => api.getUserBookings(user!.id),
-    enabled: !!user,
+const MyTickets: React.FC = () => {
+  const { data: tickets, isLoading, error } = useQuery<BookingWithDetails[]>({ 
+    queryKey: ['my-tickets'], 
+    queryFn: api.bookings.getMyBookings 
   });
 
-  const { data: movies } = useQuery({
-    queryKey: ['movies'],
-    queryFn: api.getMovies,
-  });
-
-  const { data: cinemas } = useQuery({
-    queryKey: ['cinemas'],
-    queryFn: api.getCinemas,
-  });
-
-  if (isLoading) {
-    return <div className="flex justify-center items-center min-h-[50vh]">Loading tickets...</div>;
-  }
-
-  if (!bookings || bookings.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8">My Tickets</h1>
-        <p className="text-gray-600">You haven't booked any tickets yet.</p>
-      </div>
-    );
-  }
-
-  const enrichedBookings: BookingWithDetails[] = bookings.map(booking => ({
-    ...booking,
-    movie: movies?.find(m => m.id === booking.movieId),
-    cinema: cinemas?.find(c => c.id === booking.cinemaId)
-  }));
+  if (isLoading) return <div className="p-8 text-center">Loading tickets...</div>;
+  if (error) return <div className="p-8 text-center text-red-500">Error loading tickets</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">My Tickets</h1>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {enrichedBookings.map((ticket) => (
-          <div key={ticket.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
-            <div className="p-6">
-              <h3 className="text-xl font-bold mb-2">{ticket.movie?.title || 'Unknown Movie'}</h3>
-              <p className="text-gray-600 mb-4">{ticket.cinema?.name || 'Unknown Cinema'}</p>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Date:</span>
-                  <span className="font-medium">{new Date(ticket.date).toLocaleDateString()}</span>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {tickets?.map((ticket) => (
+          <div key={ticket.id} className="bg-gray-800 rounded-lg overflow-hidden shadow-lg border border-gray-700">
+            <div className="flex h-48">
+              <img 
+                src={ticket.posterUrl} 
+                alt={ticket.movieTitle} 
+                className="w-32 object-cover"
+              />
+              <div className="p-4 flex-1 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-bold text-xl mb-2">{ticket.movieTitle}</h3>
+                  <p className="text-gray-400 text-sm">{ticket.cinemaName}</p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Time:</span>
-                  <span className="font-medium">{ticket.time}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Seats:</span>
-                  <span className="font-medium">{ticket.seats.join(', ')}</span>
-                </div>
-                <div className="flex justify-between pt-4 border-t">
-                  <span className="text-gray-500">Total Price:</span>
-                  <span className="font-bold text-indigo-600">${ticket.totalPrice}</span>
+                <div>
+                  <p className="text-lg font-mono">
+                    {format(new Date(ticket.date), 'PPP')}
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    {ticket.time} • {ticket.seats.length} seats
+                  </p>
                 </div>
               </div>
             </div>
-            <div className="bg-gray-50 px-6 py-3 text-xs text-gray-500 flex justify-between items-center">
-              <span>ID: {ticket.id}</span>
-              <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full capitalize">{ticket.status}</span>
+            <div className="bg-gray-700 px-4 py-2 flex justify-between items-center">
+              <span className="text-sm font-mono text-gray-300">ID: {ticket.id}</span>
+              <span className="font-bold text-green-400">${ticket.totalPrice}</span>
             </div>
           </div>
         ))}
+        {tickets?.length === 0 && (
+          <p className="col-span-full text-center text-gray-500">No tickets found.</p>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default MyTickets;
