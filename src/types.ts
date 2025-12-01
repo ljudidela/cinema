@@ -1,19 +1,7 @@
 export interface User {
   id: string;
   username: string;
-  email?: string;
-}
-
-export interface LoginCredentials {
-  username: string;
-  password?: string;
-}
-
-export interface RegisterData {
-  username: string;
-  password?: string;
-  email?: string;
-  confirmPassword?: string;
+  email: string;
 }
 
 export interface Movie {
@@ -21,8 +9,8 @@ export interface Movie {
   title: string;
   description: string;
   posterUrl: string;
-  genre: string;
   durationMinutes: number;
+  genres: string[];
 }
 
 export interface Cinema {
@@ -35,7 +23,7 @@ export interface Session {
   id: string;
   movieId: string;
   cinemaId: string;
-  startTime: string;
+  date: string;
   price: number;
   seatsAvailable: number;
 }
@@ -48,8 +36,25 @@ export interface Booking {
   status: 'confirmed' | 'cancelled';
 }
 
-export interface BookingWithDetails extends Booking {
-  session: Session;
-  movie: Movie;
-  cinema: Cinema;
+export interface BookingWithDetails {
+  id: string;
+  movieTitle: string;
+  posterUrl: string;
+  cinemaName: string;
+  date: string;
+  time: string;
+  seats: number;
+  price: number;
+}
+
+export interface LoginCredentials {
+  username: string;
+  password?: string;
+}
+
+export interface RegisterData {
+  username: string;
+  password?: string;
+  email?: string;
+  confirmPassword?: string;
 }
