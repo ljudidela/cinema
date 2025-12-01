@@ -1,23 +1,82 @@
-import { User, Movie, Cinema, Session, Booking } from '../types';
+import { Movie, Cinema, Session, User, Booking } from '../types';
 
-export const mockDb = {
-  users: [
-    { id: '1', username: 'user1', email: 'user1@example.com' }
-  ] as User[],
-  movies: [
-    { id: '1', title: 'Inception', description: 'A thief who steals corporate secrets through the use of dream-sharing technology.', posterUrl: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500', durationMinutes: 148, genres: ['Sci-Fi', 'Action'] },
-    { id: '2', title: 'The Dark Knight', description: 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham.', posterUrl: 'https://images.unsplash.com/photo-1478720568477-152d9b164e63?w=500', durationMinutes: 152, genres: ['Action', 'Crime'] },
-    { id: '3', title: 'Interstellar', description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.', posterUrl: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=500', durationMinutes: 169, genres: ['Sci-Fi', 'Drama'] }
-  ] as Movie[],
-  cinemas: [
-    { id: '1', name: 'Grand Cinema', location: 'Downtown' },
-    { id: '2', name: 'Mall Cinema', location: 'Shopping Mall' }
-  ] as Cinema[],
-  sessions: [
-    { id: '1', movieId: '1', cinemaId: '1', date: '2024-03-20T18:00:00Z', price: 15, seatsAvailable: 50 },
-    { id: '2', movieId: '1', cinemaId: '2', date: '2024-03-20T20:00:00Z', price: 12, seatsAvailable: 30 },
-    { id: '3', movieId: '2', cinemaId: '1', date: '2024-03-21T19:00:00Z', price: 14, seatsAvailable: 45 },
-    { id: '4', movieId: '3', cinemaId: '2', date: '2024-03-21T21:00:00Z', price: 16, seatsAvailable: 60 }
-  ] as Session[],
-  bookings: [] as Booking[]
-};
+export const movies: Movie[] = [
+  {
+    id: '1',
+    title: 'Dune: Part Two',
+    description: 'Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.',
+    posterUrl: '![image](https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg)',
+    genre: 'Sci-Fi',
+    duration: 166,
+    rating: 8.8,
+  },
+  {
+    id: '2',
+    title: 'Kung Fu Panda 4',
+    description: 'Po is gearing up to become the spiritual leader of his Valley of Peace, but also needs someone to take his place as Dragon Warrior.',
+    posterUrl: '![image](https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg)',
+    genre: 'Animation',
+    duration: 94,
+    rating: 7.6,
+  },
+  {
+    id: '3',
+    title: 'Oppenheimer',
+    description: 'The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.',
+    posterUrl: '![image](https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg)',
+    genre: 'Biography',
+    duration: 180,
+    rating: 8.6,
+  }
+];
+
+export const cinemas: Cinema[] = [
+  {
+    id: '1',
+    name: 'Grand Cinema',
+    address: '123 Movie St, City Center',
+    description: 'Best IMAX experience in town',
+  },
+  {
+    id: '2',
+    name: 'Cozy Theater',
+    address: '456 Film Ave, Suburbs',
+    description: 'Comfortable recliners and gourmet snacks',
+  },
+];
+
+export const sessions: Session[] = [
+  {
+    id: '101',
+    movieId: '1',
+    cinemaId: '1',
+    date: '2024-03-20',
+    time: '18:00',
+    price: 15,
+    seats: Array(8).fill(Array(10).fill(0)),
+  },
+  {
+    id: '102',
+    movieId: '1',
+    cinemaId: '2',
+    date: '2024-03-20',
+    time: '20:00',
+    price: 12,
+    seats: Array(6).fill(Array(8).fill(0)),
+  },
+  {
+    id: '103',
+    movieId: '2',
+    cinemaId: '1',
+    date: '2024-03-21',
+    time: '14:00',
+    price: 10,
+    seats: Array(8).fill(Array(10).fill(0)),
+  }
+];
+
+export const users: User[] = [
+  { id: '1', username: 'demo', email: 'demo@example.com' }
+];
+
+export const bookings: Booking[] = [];
