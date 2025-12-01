@@ -22,23 +22,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const u = await api.auth.me();
-      setUser(u);
-    } catch (e) {
-      setUser(null);
+      const user = await api.auth.me();
+      setUser(user);
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const login = async (credentials: LoginCredentials) => {
-    const { user } = await api.auth.login(credentials);
-    setUser(user);
+    const { user: loggedInUser } = await api.auth.login(credentials);
+    setUser(loggedInUser);
   };
 
   const register = async (data: RegisterData) => {
-    const { user } = await api.auth.register(data);
-    setUser(user);
+    const { user: registeredUser } = await api.auth.register(data);
+    setUser(registeredUser);
   };
 
   const logout = () => {
@@ -52,10 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}
+};
