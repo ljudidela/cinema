@@ -1,49 +1,76 @@
-import { useQuery } from '@tanstack/react-query';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { format } from 'date-fns';
+import { Session, Cinema, Movie } from '../types';
 
-export const MovieDetails = () => {
-  const { id } = useParams();
-  const { data: movies } = useQuery({ queryKey: ['movies'], queryFn: api.getMovies });
-  const { data: sessions } = useQuery({ queryKey: ['movieSessions', id], queryFn: () => api.getMovieSessions(id!) });
-  const { data: cinemas } = useQuery({ queryKey: ['cinemas'], queryFn: api.getCinemas });
+export default function MovieDetails() {
+  const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
 
-  const movie = movies?.find(m => m.id === id);
+  const { data: movie } = useQuery<Movie | undefined>({
+    queryKey: ['movie', id],
+    queryFn: () => api.movies.getById(id!)
+  });
 
-  if (!movie) return <div className="container">Loading...</div>;
+  const { data: sessions } = useQuery<Session[]>({
+    queryKey: ['sessions', id],
+    queryFn: () => api.movies.getSessions(id!)
+  });
+
+  const { data: cinemas } = useQuery<Cinema[]>({
+    queryKey: ['cinemas'],
+    queryFn: api.cinemas.getAll
+  });
+
+  const bookMutation = useMutation({
+    mutationFn: (sessionId: string) => api.bookings.create(sessionId, 1),
+    onSuccess: () => {
+      alert('Booking confirmed!');
+      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+    }
+  });
+
+  if (!movie) return <div>Loading...</div>;
 
   return (
-    <div className="container">
-      <div style={{ display: 'flex', gap: '30px', margin: '30px 0' }}>
-        <img src={movie.poster} alt={movie.title} style={{ width: '200px', borderRadius: '8px' }} />
-        <div>
-          <h1>{movie.title}</h1>
-          <p style={{ marginTop: '10px', color: '#ccc' }}>{movie.description}</p>
-          <p style={{ marginTop: '10px' }}><strong>Genre:</strong> {movie.genre}</p>
-          <p><strong>Duration:</strong> {movie.duration} min</p>
-        </div>
-      </div>
+    <div className="container mx-auto p-4">
+      <div className="flex flex-col md:flex-row gap-8">
+        <img src={movie.posterUrl} alt={movie.title} className="w-full md:w-1/3 rounded-lg shadow-lg" />
+        <div className="flex-1">
+          <h1 className="text-4xl font-bold mb-4">{movie.title}</h1>
+          <p className="text-gray-600 mb-4">{movie.description}</p>
+          <div className="mb-6">
+            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full mr-2">{movie.genre}</span>
+            <span className="text-gray-500">{movie.durationMinutes} min</span>
+          </div>
 
-      <h2>Сеансы</h2>
-      <div style={{ marginTop: '20px' }}>
-        {sessions?.map(session => {
-          const cinema = cinemas?.find(c => c.id === session.cinemaId);
-          return (
-            <div key={session.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <div>
-                <h3>{cinema?.name}</h3>
-                <p>{format(new Date(session.date), 'dd MMM yyyy, HH:mm')}</p>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <span style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>${session.price}</span>
-                <Link to={`/booking/${session.id}`} className="btn">Выбрать места</Link>
-              </div>
-            </div>
-          );
-        })}
-        {sessions?.length === 0 && <p>Нет доступных сеансов.</p>}
+          <h2 className="text-2xl font-bold mb-4">Sessions</h2>
+          <div className="grid gap-4">
+            {sessions?.map((session) => {
+              const cinema = cinemas?.find((c) => c.id === session.cinemaId);
+              return (
+                <div key={session.id} className="border p-4 rounded-lg flex justify-between items-center">
+                  <div>
+                    <p className="font-bold">{cinema?.name || 'Unknown Cinema'}</p>
+                    <p className="text-sm text-gray-600">{format(new Date(session.startTime), 'PPp')}</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="font-bold">${session.price}</span>
+                    <button
+                      onClick={() => bookMutation.mutate(session.id)}
+                      disabled={bookMutation.isPending}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Book
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
-};
+}
