@@ -4,19 +4,31 @@ export interface User {
   email: string;
 }
 
+export interface LoginCredentials {
+  username: string;
+  password: string;
+}
+
+export interface RegisterData {
+  username: string;
+  password: string;
+}
+
 export interface Movie {
   id: string;
   title: string;
   description: string;
   posterUrl: string;
-  durationMinutes: number;
-  genres: string[];
+  genre: string;
+  duration: number;
+  rating: number;
 }
 
 export interface Cinema {
   id: string;
   name: string;
-  location: string;
+  address: string;
+  description: string;
 }
 
 export interface Session {
@@ -24,37 +36,24 @@ export interface Session {
   movieId: string;
   cinemaId: string;
   date: string;
+  time: string;
   price: number;
-  seatsAvailable: number;
+  seats: number[][]; // 0: free, 1: taken
 }
 
 export interface Booking {
   id: string;
   userId: string;
   sessionId: string;
-  seats: number;
-  status: 'confirmed' | 'cancelled';
+  seats: { row: number; col: number }[];
+  totalPrice: number;
+  createdAt: string;
 }
 
-export interface BookingWithDetails {
-  id: string;
+export interface BookingWithDetails extends Booking {
   movieTitle: string;
   posterUrl: string;
   cinemaName: string;
   date: string;
   time: string;
-  seats: number;
-  price: number;
-}
-
-export interface LoginCredentials {
-  username: string;
-  password?: string;
-}
-
-export interface RegisterData {
-  username: string;
-  password?: string;
-  email?: string;
-  confirmPassword?: string;
 }
