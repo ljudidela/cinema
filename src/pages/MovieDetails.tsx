@@ -1,66 +1,65 @@
 import { useParams } from 'react-router-dom';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { format } from 'date-fns';
-import { Session, Cinema, Movie } from '../types';
+import { Session, Cinema } from '../types';
 
 export default function MovieDetails() {
   const { id } = useParams<{ id: string }>();
-  const queryClient = useQueryClient();
 
-  const { data: movie } = useQuery<Movie | undefined>({
+  const { data: movie } = useQuery({
     queryKey: ['movie', id],
-    queryFn: () => api.movies.getById(id!)
+    queryFn: () => api.movies.getOne(id!),
+    enabled: !!id
   });
 
-  const { data: sessions } = useQuery<Session[]>({
+  const { data: sessions } = useQuery({
     queryKey: ['sessions', id],
-    queryFn: () => api.movies.getSessions(id!)
+    queryFn: () => api.movies.getSessions(id!),
+    enabled: !!id
   });
 
-  const { data: cinemas } = useQuery<Cinema[]>({
+  const { data: cinemas } = useQuery({
     queryKey: ['cinemas'],
     queryFn: api.cinemas.getAll
   });
 
   const bookMutation = useMutation({
-    mutationFn: (sessionId: string) => api.bookings.create(sessionId, 1),
+    mutationFn: (vars: { sessionId: string, seats: number }) => api.bookings.create(vars),
     onSuccess: () => {
-      alert('Booking confirmed!');
-      queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      alert('Booking successful!');
     }
   });
 
-  if (!movie) return <div>Loading...</div>;
+  if (!movie) return <div className="p-8">Loading...</div>;
 
   return (
     <div className="container mx-auto p-4">
-      <div className="flex flex-col md:flex-row gap-8">
-        <img src={movie.posterUrl} alt={movie.title} className="w-full md:w-1/3 rounded-lg shadow-lg" />
+      <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col md:flex-row gap-8">
+        <img src={movie.posterUrl} alt={movie.title} className="w-full md:w-80 rounded-lg object-cover" />
         <div className="flex-1">
           <h1 className="text-4xl font-bold mb-4">{movie.title}</h1>
-          <p className="text-gray-600 mb-4">{movie.description}</p>
+          <p className="text-gray-600 mb-6 text-lg">{movie.description}</p>
           <div className="mb-6">
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full mr-2">{movie.genre}</span>
-            <span className="text-gray-500">{movie.durationMinutes} min</span>
+            <span className="font-semibold">Duration:</span> {movie.durationMinutes} min
           </div>
-
-          <h2 className="text-2xl font-bold mb-4">Sessions</h2>
-          <div className="grid gap-4">
-            {sessions?.map((session) => {
-              const cinema = cinemas?.find((c) => c.id === session.cinemaId);
+          
+          <h2 className="text-2xl font-bold mb-4">Available Sessions</h2>
+          <div className="space-y-4">
+            {sessions?.map((session: Session) => {
+              const cinema = cinemas?.find((c: Cinema) => c.id === session.cinemaId);
               return (
-                <div key={session.id} className="border p-4 rounded-lg flex justify-between items-center">
+                <div key={session.id} className="border rounded-lg p-4 flex justify-between items-center hover:bg-gray-50">
                   <div>
-                    <p className="font-bold">{cinema?.name || 'Unknown Cinema'}</p>
-                    <p className="text-sm text-gray-600">{format(new Date(session.startTime), 'PPp')}</p>
+                    <div className="font-bold text-lg">{cinema?.name || 'Unknown Cinema'}</div>
+                    <div className="text-gray-600">{format(new Date(session.date), 'PPp')}</div>
+                    <div className="text-sm text-green-600">{session.seatsAvailable} seats available</div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="font-bold">${session.price}</span>
-                    <button
-                      onClick={() => bookMutation.mutate(session.id)}
-                      disabled={bookMutation.isPending}
-                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                    <span className="text-xl font-bold">${session.price}</span>
+                    <button 
+                      onClick={() => bookMutation.mutate({ sessionId: session.id, seats: 1 })}
+                      className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                     >
                       Book
                     </button>
@@ -68,6 +67,7 @@ export default function MovieDetails() {
                 </div>
               );
             })}
+            {sessions?.length === 0 && <p>No sessions available.</p>}
           </div>
         </div>
       </div>
