@@ -1,5 +1,5 @@
-import { LoginCredentials, RegisterData, User, Movie, Cinema, Session, Booking } from '../types';
-import { mockDb } from './mockDb';
+import { LoginCredentials, RegisterData, User, Movie, Cinema, Session, Booking, BookingWithDetails } from '../types';
+import { movies, cinemas, sessions, users, bookings } from './mockDb';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -7,63 +7,80 @@ export const api = {
   auth: {
     login: async (credentials: LoginCredentials): Promise<{ user: User; token: string }> => {
       await delay(500);
-      const user = mockDb.users.find(u => u.username === credentials.username);
+      const user = users.find(u => u.username === credentials.username);
       if (!user) throw new Error('Invalid credentials');
-      return { user, token: 'mock-token' };
+      return { user, token: 'fake-jwt-token' };
     },
     register: async (data: RegisterData): Promise<{ user: User; token: string }> => {
       await delay(500);
-      const newUser: User = { id: Math.random().toString(), username: data.username, email: data.email || '' };
-      mockDb.users.push(newUser);
-      return { user: newUser, token: 'mock-token' };
+      const newUser: User = { id: Math.random().toString(), username: data.username, email: `${data.username}@example.com` };
+      users.push(newUser);
+      return { user: newUser, token: 'fake-jwt-token' };
     },
     me: async (): Promise<User> => {
-      await delay(300);
-      return mockDb.users[0];
-    }
+      await delay(200);
+      return users[0]; // Mock current user
+    },
   },
   movies: {
     getAll: async (): Promise<Movie[]> => {
       await delay(500);
-      return mockDb.movies;
+      return movies;
     },
-    getOne: async (id: string): Promise<Movie | undefined> => {
+    getById: async (id: string): Promise<Movie | undefined> => {
       await delay(300);
-      return mockDb.movies.find(m => m.id === id);
-    },
-    getSessions: async (movieId: string): Promise<Session[]> => {
-      await delay(400);
-      return mockDb.sessions.filter(s => s.movieId === movieId);
+      return movies.find(m => m.id === id);
     }
   },
   cinemas: {
     getAll: async (): Promise<Cinema[]> => {
       await delay(400);
-      return mockDb.cinemas;
+      return cinemas;
+    },
+    getById: async (id: string): Promise<Cinema | undefined> => {
+      await delay(200);
+      return cinemas.find(c => c.id === id);
     }
   },
   sessions: {
-    getAll: async (): Promise<Session[]> => {
-        await delay(400);
-        return mockDb.sessions;
+    getByMovie: async (movieId: string): Promise<Session[]> => {
+      await delay(400);
+      return sessions.filter(s => s.movieId === movieId);
+    },
+    getById: async (id: string): Promise<Session | undefined> => {
+      await delay(200);
+      return sessions.find(s => s.id === id);
     }
   },
   bookings: {
-    create: async ({sessionId, seats}: {sessionId: string, seats: number}): Promise<Booking> => {
+    create: async (booking: Omit<Booking, 'id' | 'createdAt' | 'userId'>): Promise<Booking> => {
       await delay(600);
-      const booking: Booking = {
+      const newBooking: Booking = {
+        ...booking,
         id: Math.random().toString(),
         userId: '1',
-        sessionId,
-        seats,
-        status: 'confirmed'
+        createdAt: new Date().toISOString(),
       };
-      mockDb.bookings.push(booking);
-      return booking;
+      bookings.push(newBooking);
+      return newBooking;
     },
-    getMyBookings: async (): Promise<Booking[]> => {
+    getMyBookings: async (): Promise<BookingWithDetails[]> => {
       await delay(500);
-      return mockDb.bookings.filter(b => b.userId === '1');
+      const myBookings = bookings.filter(b => b.userId === '1');
+      return myBookings.map(b => {
+        const session = sessions.find(s => s.id === b.sessionId);
+        const movie = session ? movies.find(m => m.id === session.movieId) : null;
+        const cinema = session ? cinemas.find(c => c.id === session.cinemaId) : null;
+        
+        return {
+          ...b,
+          movieTitle: movie?.title || 'Unknown Movie',
+          posterUrl: movie?.posterUrl || '',
+          cinemaName: cinema?.name || 'Unknown Cinema',
+          date: session?.date || '',
+          time: session?.time || '',
+        };
+      });
     }
   }
 };
