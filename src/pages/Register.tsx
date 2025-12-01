@@ -1,73 +1,62 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { useMutation } from '@tanstack/react-query';
 
-export const Register = () => {
+export default function Register() {
   const [formData, setFormData] = useState({ username: '', password: '', confirmPassword: '' });
-  const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { register } = useAuth();
   const navigate = useNavigate();
+  const [error, setError] = useState('');
 
-  const mutation = useMutation({
-    mutationFn: api.registerWithPass,
-    onSuccess: (user) => {
-      login(user);
-      navigate('/my-tickets');
-    },
-    onError: (err) => setError(err.message)
-  });
-
-  const validate = () => {
-    if (formData.username.length < 8) return 'Username должен быть не менее 8 символов';
-    if (formData.password.length < 8) return 'Пароль должен быть не менее 8 символов';
-    if (!/[A-Z]/.test(formData.password)) return 'Пароль должен содержать заглавную букву';
-    if (!/[0-9]/.test(formData.password)) return 'Пароль должен содержать цифру';
-    if (formData.password !== formData.confirmPassword) return 'Пароли не совпадают';
-    return null;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const validationError = validate();
-    if (validationError) {
-      setError(validationError);
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
-    setError('');
-    mutation.mutate(formData);
+    try {
+      await register({ username: formData.username, password: formData.password });
+      navigate('/');
+    } catch (err) {
+      setError('Registration failed');
+    }
   };
 
   return (
-    <div className="container" style={{ maxWidth: '400px', marginTop: '50px' }}>
-      <h1 style={{ marginBottom: '20px' }}>Регистрация</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          className="input"
-          placeholder="Username (min 8 chars)"
-          value={formData.username}
-          onChange={e => setFormData({ ...formData, username: e.target.value })}
-        />
-        <input
-          className="input"
-          type="password"
-          placeholder="Password (min 8 chars, 1 Upper, 1 Digit)"
-          value={formData.password}
-          onChange={e => setFormData({ ...formData, password: e.target.value })}
-        />
-        <input
-          className="input"
-          type="password"
-          placeholder="Confirm Password"
-          value={formData.confirmPassword}
-          onChange={e => setFormData({ ...formData, confirmPassword: e.target.value })}
-        />
-        {error && <span className="error-text">{error}</span>}
-        <button disabled={mutation.isPending} className="btn" style={{ width: '100%' }}>
-          {mutation.isPending ? 'Загрузка...' : 'Зарегистрироваться'}
-        </button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
+        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Username"
+            value={formData.username}
+            onChange={e => setFormData({...formData, username: e.target.value})}
+            className="w-full p-2 border rounded"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={e => setFormData({...formData, password: e.target.value})}
+            className="w-full p-2 border rounded"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={formData.confirmPassword}
+            onChange={e => setFormData({...formData, confirmPassword: e.target.value})}
+            className="w-full p-2 border rounded"
+            required
+          />
+          <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+            Register
+          </button>
+        </form>
+      </div>
     </div>
   );
-};
+}
